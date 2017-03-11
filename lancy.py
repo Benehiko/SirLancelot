@@ -1,12 +1,5 @@
-import discord
-import asyncio
-import logging
-import requests
-import simplejson
-import sys
-import json
+import discord, asyncio, logging, requests, simplejson, sys, json
 
-#logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger('discord')
 logger.setLevel(logging.DEBUG)
 handler = logging.FileHandler(filename='discord.log' , encoding='utf-8' , mode='w')
@@ -14,6 +7,19 @@ handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s:%(mes
 logger.addHandler(handler)
 
 client = discord.Client()
+
+def open_config_file():
+        try:
+            with open('config.arthur','r') as json_file:
+                decoded = json.load(json_file)
+            return decoded
+        except Exception as e:
+            print('Exception occured in open_config_file() as '+ e)
+            return e
+
+data = open_config_file()
+token = data['Token']
+yandex_key = data['Yandex']
 
 async def get_oauth_url():
          try:
@@ -28,15 +34,6 @@ async def connection_details():
         except Exception as e:
             return 'Could not retrieve server information' , e;
         return data
-
-async def open_config_file():
-        try:
-            with open('config.arthur','w') as json_file:
-                decoded = json.load(json_file)
-            return decoded
-        except Exception as e:
-            print('Exception occured in open_config_file() as '+ e)
-            return e
 
 async def get_languages():
        try:
@@ -66,11 +63,8 @@ async def get_translate(string):
             t1 = string[16:18]
             s1 = string[13:15]
             if await check_code(t1, s1):
-                #langpair = '%s|%s'%(t1,s1)
-                #data = await open_config_file()
-                key = 'trnsl.1.1.20170311T095204Z.863774c3afc43d4e.038047cb2950f9f8549ccd406e0aff6b527a89c2'
                 url = 'https://translate.yandex.net/api/v1.5/tr.json/translate?'
-                url += 'key='+key
+                url += 'key='+yandex_key
                 url += '&lang=' + s1 + '-' +t1
                 url += '&text=' + string[18:].replace(" ", "%20")
                 print(url)
@@ -148,22 +142,20 @@ async def on_message(message):
 
 @client.event
 async def on_ready():
+        print('Client logged in'.format(client.is_logged_in))
         print('Logged in as')
         print(client.user.name)
         print(client.user.id)
-        print('Client logged in'.format(client.is_logged_in))
-        client.login('Mjg2MjM3MjkyNDA0NjcwNDc2.C6QVpw.LjGummwnTicIgeI9-k0_1P_Nizg')
-        client.connect()
         print(await connection_details())
         
 @client.event
 async def on_server_join():
-        print('Server joined:', client.get_server('232464718994997248'))
+        print('Server joined!')
         await client.change_presence(game=discord.Game(name='NoneOfYourBusiness'))
 
 loop = asyncio.get_event_loop()
 try:
-      loop.run_until_complete(client.start('Mjg2MjM3MjkyNDA0NjcwNDc2.C6P6Ug.NFWm0Qf4d2FmhIetjw2rePgi_V4'))
+      loop.run_until_complete(client.start(token))
 except KeyboardInterrupt:
       loop.run_until_complete(client.logout())
       print('Logged out')

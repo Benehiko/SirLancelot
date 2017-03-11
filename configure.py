@@ -1,4 +1,4 @@
-import discord, asyncio, logging, sys, traceback, json, os
+import discord, asyncio, logging, sys, json, os, traceback
 
 logger = logging.getLogger('discord')
 logger.setLevel(logging.DEBUG)
@@ -7,7 +7,7 @@ handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s:%(mes
 logger.addHandler(handler)
 
 client = discord.Client()
-
+loop = asyncio.get_event_loop()
 
 def first_time():
           print('This is your first time running configure.py - Please follow the prompts')
@@ -56,26 +56,34 @@ async def get_oauth_url():
             return "Couldn't retrieve invite link.Error: {}".format(e)
          return discord.utils.oauth_url(data.id)
 
-@asyncio.coroutine
+
 async def add_server():
         try:
-            url = await get_oath_url()
+            url = await get_oauth_url()
             client.oauth_url = url
-            print('Follow this url to authenticate the bot:' + url)
+            print('Follow this url to authenticate the bot:' + url + '\n')
         except Exception as e:
             print(e)
 
-@asyncio.coroutine
+
 async def leave_server():
-    print(await list_server())
-    selectedServer = input('Select a server.')
-   
-@asyncio.coroutine 
-async def list_server():
-        counter = 0
-        for server in client.servers:
-             counter += 1
-             print(counter +'. '+server)
+    servers = client.servers
+    await list_server(servers)
+    selectedServer = int(input('Select a server:'))
+    counter = 1   
+    for server in servers:
+       if counter == selectedServer:
+            print(server)
+            client.leave_server(server)
+       counter += 1
+
+async def list_server(servers):
+        server
+        counter = 1
+        for server in servers:
+           print(counter,".",server)
+           counter += 1
+        print('\n')
 
 @asyncio.coroutine
 async def change_username():
@@ -90,50 +98,54 @@ async def change_username():
         except Exception as e:
             print('Exception occured with :',e)
          
+async def switch_server(arg):
+    switcher = {
+        '1': add_server,
+        '2': leave_server,
+        '3': list_server
+    }    
+    func = switcher.get(arg)
+    return await func()
+
+async def switch_bot(arg):
+    switcher = {
+        '1':change_username
+    }
+    
+    func = switcher.get(arg)
+    return await func()
+
 @client.event
 async def on_ready():
         print('Logged in as')
         print(client.user.name)
         print(client.user.id)
         print('Client logged in'.format(client.is_logged_in))
-        #client.login('Mjg2MjM3MjkyNDA0NjcwNDc2.C6QVpw.LjGummwnTicIgeI9-k0_1P_Nizg')
-        menu = "Welcome to SirLancelot v1.0 configuration!\n Please choose an option:\n"
+        menu = "Welcome to SirLancelot v1.0 configuration!\nPlease choose an option:\n"
         menu += "1. Server Menu\n"
         menu += "2. Bot Menu\n"
+        menu += "3. Exit\n"
         server = "~-Server Menu-~\n"
         server += "1. Add Server\n"
         server += "2. Remove Server\n"
         server += "3. List Connected Servers\n"
         bot = "~-Bot Menu-~\n"
-        bot += "1. Change Username"
+        bot += "1. Change Username\n"
+      
+        while True: 
+            print(menu)
+            var = input("")
+            if var == '1':
+                serverOption = input(server)
+                await switch_server(serverOption)
+            elif var == '2':
+                botOption = input(bot)
+                await switch_bot(botOption)
+            elif var == '3':
+                print('Bot Logging off and shutting down...')
+                raise KeyboardInterrupt
         
-        print(menu)
-        var = input("")
-        if var == '1':
-            print(server)
-            switch_server(input(""))
-        elif var == '2':
-            print(bot)
-            switch_bot(input(""))
-                      
-def switch_server(arg):
-    switcher = {
-        '1': await add_server(),
-        '2': await leave_server(),
-        '3': await list_server()
-    }      
-    func = switcher.get(arg)
-    return func()
-         
-def switch_bot(arg):
-    switcher = {
-        '1':change_username(),
-    }
-    func = switcher.get(arg)
-    return func
 
-
-loop = asyncio.get_event_loop()
 try:
       loop.run_until_complete(client.start(conf['Token']))
 except KeyboardInterrupt:
@@ -142,3 +154,5 @@ except KeyboardInterrupt:
       # cancel all tasks lingering
 finally:
       loop.close()
+      
+
