@@ -11,6 +11,17 @@ Some Libraries Sir Lancelot uses:
 - logging
 - requests
 
+Installation:
+  Current Supported OS:
+    Anything running off of the Ubuntu framework using `apt install`
+  
+  Go to directory where the repository was cloned to. Open terminal in that directory and type:
+    `./install.sh`
+  It will ask for your sudo password as it will be installing the above packages.
+  Let it run through and then test by running configure.py.
+  If it gives errors on modules mising -- manually install them.
+  <b>Note: This bot runs on python3.5 --The install.sh script installs (upgrades) python3.5 with python3 pip.</b>
+  
 Purpose of Bot:
   Initially I thought it would be fun to sit in discord and see what crazy translations you could come up with.
   But then it struck me - why not get a bot to be a grammar-nazi on discord. It would be so cool!
