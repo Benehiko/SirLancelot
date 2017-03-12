@@ -1,4 +1,5 @@
 import discord, asyncio, logging, requests, sys, json
+import marco_protection
 
 logger = logging.getLogger('discord')
 logger.setLevel(logging.DEBUG)
@@ -7,6 +8,7 @@ handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s:%(mes
 logger.addHandler(handler)
 
 client = discord.Client()
+protection = marco_protection.Protection()
 
 def open_config_file():
         try:
@@ -19,7 +21,8 @@ def open_config_file():
 
 data = open_config_file()
 token = data['Token']
-yandex_key = data['Yandex']
+yandex_tr = data['Yandex_tr']
+yandex_di = data['Yandex_di']
 
 async def get_oauth_url():
          try:
@@ -57,6 +60,35 @@ async def check_code(code1,code2):
       except Exception as e:
             return e
  
+async def get_definition(string):
+       try:
+            
+            s1 = string[14:16]
+            t1 = string[17:19]
+            text = string[20:]
+            if await check_code(t1, s1):
+                url = 'https://dictionary.yandex.net/api/v1/dicservice.json/lookup?'
+                url += 'key='+yandex_di
+                url += '&lang='+s1+'-'+t1
+                url += '&text='+text.replace(" ", "%20")
+                print(url)
+                r = requests.get(url)
+                dictionary = json.loads(r.text)
+                print(dictionary)
+                output = "Word Entered: " + dictionary['def']['text'] + '\n'
+                              
+                translation = dictionary['def']['tr']
+                for word in translation['text'].itervalues():
+                    output += 'Translation: ' + word+'\n'
+
+                for synonym in translation['syn'].itervalues():
+                    output += 'Synonym of Traslation: ' + synonym['text'] + '\n'
+                    output += '--------------------------------\n'
+                       
+                return output
+       except Exception as e:
+            print('Dictionary exception happened: ',e)
+
 async def get_translate(string):
        try:
             
@@ -64,10 +96,10 @@ async def get_translate(string):
             s1 = string[13:15]
             if await check_code(t1, s1):
                 url = 'https://translate.yandex.net/api/v1.5/tr.json/translate?'
-                url += 'key='+yandex_key
+                url += 'key='+yandex_tr
                 url += '&lang=' + s1 + '-' +t1
                 url += '&text=' + string[18:].replace(" ", "%20")
-                print(url)
+                #print(url)
             
                 r = requests.post(url)
                 code = r.status_code
@@ -75,7 +107,8 @@ async def get_translate(string):
                     out = 'Success !'
                     print(out + '\nMessage: ' + r.text)
                     dictionary = json.loads(r.text)
-                    return dictionary['text']
+                    text = ''.join(dictionary['text'])
+                    return text
                 elif code == 401:
                     print('Invalid API Key')
                     return 'Err..contact your server admin and tell him the bot says error code 401'
@@ -114,9 +147,18 @@ async def get_all_channels():
 
 @client.event
 async def on_message(message):
-    if message.content.startswith(';;;translate'):
-        await client.send_message(message.channel, 'Translating...\n')
-        await client.send_message(message.channel, await get_translate(message.content))
+    msg = message.content.lower()
+    if msg.startswith(';;;translate'):
+        sent_message = await client.send_message(message.channel, 'Translating...')
+        var = protection.is_translated(msg[18:])
+        if var:
+            translated = await protection.get_translated(msg[18:])
+        else:
+            translated = await get_translate(msg)
+            await protection.add(msg[18:], translated)
+        if msg[18:] == 'marco':
+            translated += 'ヽ༼ಢ_ಢ༽ﾉ'
+        await client.edit_message(sent_message, translated, embed=None)
 
     if message.content.startswith(';;;help'):
         string = 'SirLancelot v1.0 \n Some Commands: \n' 
@@ -139,6 +181,10 @@ async def on_message(message):
  
     if message.content.startswith(';;;supported'):
         await client.send_message(message.channel, await get_languages())
+
+    if message.content.startswith(';;;dictionary'):
+        sent_message = await client.send_message(message.channel, 'Defining...')
+        await client.edit_message(sent_message, new_content=await get_definition(message.content), embed=None)
 
 @client.event
 async def on_ready():
