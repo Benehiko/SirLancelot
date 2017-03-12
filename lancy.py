@@ -1,4 +1,4 @@
-import discord, asyncio, logging, requests, simplejson, sys, json
+import discord, asyncio, logging, requests, sys, json
 
 logger = logging.getLogger('discord')
 logger.setLevel(logging.DEBUG)
