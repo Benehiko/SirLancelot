@@ -24,6 +24,25 @@ token = data['Token']
 yandex_tr = data['Yandex_tr']
 yandex_di = data['Yandex_di']
 
+async def get_eggs():
+        try:
+            with open('eggs.table','r') as f:
+                eggs = json.load(f)
+            return eggs
+        except Exception as e:
+            print(e)
+
+async def add_egg(keyword,egg):
+        try:
+            new_egg = {'text': keyword, 'value': egg}
+            data = await get_eggs() 
+            data.append(new_egg)           
+            with open('eggs.table','w') as eggs:
+                json.dump(data, eggs)
+            return True
+        except Exception as e:
+            return False
+
 async def get_oauth_url():
          try:
             data = await client.application_info()
@@ -145,6 +164,12 @@ async def get_all_channels():
     except Exception as e:
         return 'Exception: ', e
 
+async def find_in_json(word, jason):
+    for words in jason:
+        if words['text'] in word:
+            return words['value']
+    return " "
+
 @client.event
 async def on_message(message):
     msg = message.content.lower()
@@ -156,10 +181,26 @@ async def on_message(message):
         else:
             translated = await get_translate(msg)
             await protection.add(msg[18:], translated)
-        if msg[18:] == 'marco':
-            translated += 'ヽ༼ಢ_ಢ༽ﾉ'
+
+        eggs = await get_eggs()
+        emoji = await find_in_json(msg[18:], eggs)
+        translated = translated +"    "+ emoji
         await client.edit_message(sent_message, translated, embed=None)
 
+    if msg.startswith(';;;eggs'):
+        print(msg[8:11])
+        if msg[8:11] == 'add':
+            print('Adding egg')
+            add = msg[12:]
+            egg = add[add.find(',')+1:]
+            keyword = add[:add.find(',')-1]
+            if await add_egg(keyword,egg):
+                sent_message = await client.send_message(message.channel, 'Egg Added!')
+            else:
+                sent_message = await client.send_message(message.channel, 'Hmm.. Something happened and now it is broken')           
+        elif msg[8:] in 'remove':
+            remove = msg[14:]
+         
     if message.content.startswith(';;;help'):
         string = 'SirLancelot v1.0 \n Some Commands: \n' 
         string += ';;;translate [param_translate_from, param_translate_to]\nlet the bot know you want something translated.\n'
