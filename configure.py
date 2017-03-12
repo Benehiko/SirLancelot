@@ -14,8 +14,9 @@ def first_time():
           if os.path.isfile('config.arthur'):
                 os.remove('config.arthur')
           token = input('Enter your bot token: ')
-          yandex = input('Enter your yandex api key:')
-          config_dump = {'Token': token, 'Yandex': yandex}
+          yandex_tr = input('Enter your yandex translator api key:')
+          yandex_di = input('Enter your yandex dictionary api key:')
+          config_dump = {'Token': token, 'Yandex_tr': yandex_tr, 'Yandex_di':yandex_di}
           a = json.dumps(config_dump)
           encoded = json.loads(a)
           with open('config.arthur' ,'w') as jd:
