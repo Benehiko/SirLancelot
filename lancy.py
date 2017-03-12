@@ -1,4 +1,5 @@
 import discord, asyncio, logging, requests, sys, json
+import marco_protection
 
 logger = logging.getLogger('discord')
 logger.setLevel(logging.DEBUG)
@@ -7,6 +8,7 @@ handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s:%(mes
 logger.addHandler(handler)
 
 client = discord.Client()
+protection = marco_protection.Protection()
 
 def open_config_file():
         try:
@@ -105,7 +107,8 @@ async def get_translate(string):
                     out = 'Success !'
                     print(out + '\nMessage: ' + r.text)
                     dictionary = json.loads(r.text)
-                    return dictionary['text']
+                    text = ''.join(dictionary['text'])
+                    return text
                 elif code == 401:
                     print('Invalid API Key')
                     return 'Err..contact your server admin and tell him the bot says error code 401'
@@ -144,9 +147,18 @@ async def get_all_channels():
 
 @client.event
 async def on_message(message):
-    if message.content.startswith(';;;translate'):
+    msg = message.content.lower()
+    if msg.startswith(';;;translate'):
         sent_message = await client.send_message(message.channel, 'Translating...')
-        await client.edit_message(sent_message, await get_translate(message.content), embed=None)
+        var = protection.is_translated(msg[18:])
+        if var:
+            translated = await protection.get_translated(msg[18:])
+        else:
+            translated = await get_translate(msg)
+            await protection.add(msg[18:], translated)
+        if msg[18:] == 'marco':
+            translated += 'ヽ༼ಢ_ಢ༽ﾉ'
+        await client.edit_message(sent_message, translated, embed=None)
 
     if message.content.startswith(';;;help'):
         string = 'SirLancelot v1.0 \n Some Commands: \n' 
