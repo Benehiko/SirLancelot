@@ -23,7 +23,8 @@ Installation:
   It will ask for your sudo password as it will be installing the above packages.
   Let it run through and then test by running configure.py.
   If it gives errors on modules mising -- manually install them.
-  <b>Note: This bot runs on python3.5 --The install.sh script installs (upgrades) python3.5 with python3 pip.</b>
+  
+  Note: This bot runs on python3.5 --The install.sh script installs (upgrades) python3.5 with python3 pip.
   
 Purpose of Bot:
   Initially I thought it would be fun to sit in discord and see what crazy translations you could come up with.
